@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BPA360 쇼케이스 시연 영상</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: 16:9 시연 화면(챕터 타이틀 + 단계 자막) 옆에 컷 노트, 아래에 챕터 흐름표 */
+:root {
+  --ink: #0e0c0b;
+  --panel: #181513;
+  --panel-2: #221e1b;
+  --line: #3a332e;
+  --fg: #efe8e1;
+  --muted: #a89b90;
+  --sticker: #ffd21f;
+  --blood: #d23a3f;
+  --font-ui: -apple-system, "SF Pro Text", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --font-display: -apple-system, "SF Pro Display", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--ink); color: var(--fg); font-family: var(--font-ui); font-size: 15px; line-height: 1.55; }
+.wrap {
+  max-width: 1320px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 26px;
+}
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--font-display); font-size: clamp(26px, 3.4vw, 40px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin: 0; text-wrap: balance; }
+h1 b { color: var(--sticker); font-weight: 800; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.meta span { font-size: 12.5px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; }
+
+.player-row { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
+@media (max-width: 980px) { .player-row { grid-template-columns: minmax(0, 1fr); } }
+.player { display: grid; gap: 12px; min-width: 0; }
+
+/* ---------- Stage ---------- */
+.stage {
+  position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9;
+  background: #000; border-radius: 10px; overflow: hidden;
+  container-type: inline-size; outline: 1px solid var(--line);
+}
+.stage:fullscreen { border-radius: 0; outline: 0; width: 100vw; height: 100vh; aspect-ratio: auto; }
+.stage:fullscreen .tc-overlay { display: none; }
+.shot { position: absolute; inset: 0; background: center / cover no-repeat; opacity: 0; transform-origin: 50% 50%; will-change: opacity, transform; }
+.scrim { position: absolute; inset: 0; background: rgba(8, 6, 5, .72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); opacity: 0; pointer-events: none; }
+.chapter-card {
+  position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 1.4cqw;
+  opacity: 0; pointer-events: none;
+}
+.chapter-card .no { font-family: var(--font-mono); font-size: 1.6cqw; letter-spacing: .14em; color: var(--sticker); }
+.chapter-card .name { font-size: 2.2cqw; font-weight: 600; color: #d9cfc6; }
+.chapter-card .msg { font-family: var(--font-display); font-size: 5.2cqw; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; color: #fff; text-wrap: balance; padding: 0 8cqw; }
+.chip {
+  position: absolute; left: 2.2cqw; top: 2.2cqw; display: flex; align-items: center; gap: .9cqw;
+  padding: .7cqw 1.5cqw .7cqw 1cqw; border-radius: 99px; background: rgba(14, 12, 11, .78);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  font-size: 1.55cqw; font-weight: 600; opacity: 0; white-space: nowrap;
+}
+.chip .n { font-family: var(--font-mono); font-size: 1.25cqw; color: var(--ink); background: var(--sticker); border-radius: .4cqw; padding: .1cqw .6cqw; font-weight: 600; }
+.step {
+  position: absolute; left: 50%; bottom: 3.6cqw; transform: translateX(-50%);
+  max-width: 82cqw; padding: 1.1cqw 2.6cqw; border-radius: 99px;
+  background: rgba(10, 8, 7, .84); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  font-size: 2.5cqw; font-weight: 600; letter-spacing: -0.01em; color: #fff; text-align: center;
+  opacity: 0; white-space: nowrap;
+}
+.dots { position: absolute; right: 2.2cqw; top: 2.6cqw; display: flex; gap: .7cqw; opacity: .9; }
+.dots i { width: 1cqw; height: 1cqw; border-radius: 50%; background: rgba(255,255,255,.28); }
+.dots i.on { background: var(--sticker); }
+.dots i.done { background: rgba(255, 210, 31, .5); }
+.hook {
+  position: absolute; left: 0; right: 0; bottom: 7cqw; text-align: center;
+  font-family: var(--font-display); font-weight: 800; font-size: 4.6cqw; letter-spacing: -0.02em; color: #fff;
+  text-shadow: 0 .3cqw 2cqw rgba(0,0,0,.9); opacity: 0; padding: 0 6cqw; text-wrap: balance;
+}
+.endcard {
+  position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 1.6cqw; opacity: 0;
+  background: radial-gradient(ellipse at 50% 55%, #241a17 0%, #000 70%);
+}
+.endcard .mark { font-family: var(--font-display); font-weight: 800; font-size: 9cqw; letter-spacing: -0.04em; line-height: 1; }
+.endcard .mark i { font-style: normal; color: var(--sticker); }
+.endcard .line { font-size: 2.6cqw; color: #e6ddd4; font-weight: 600; }
+.endcard .cta { margin-top: 1.4cqw; justify-self: center; font-size: 1.8cqw; color: var(--ink); background: var(--sticker); padding: .7cqw 2cqw; border-radius: 99px; font-weight: 700; }
+.tc-overlay { position: absolute; right: 1.4cqw; bottom: 1.2cqw; font-family: var(--font-mono); font-size: 1.1cqw; color: rgba(255,255,255,.5); }
+
+/* ---------- Controls ---------- */
+.controls { display: grid; gap: 8px; }
+.ctrl-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+button { font: inherit; color: var(--fg); background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 14px; cursor: pointer; }
+button:hover { border-color: #5a4f46; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--sticker); outline-offset: 2px; }
+#play { min-width: 92px; font-weight: 600; }
+.tc { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 14px; color: var(--muted); }
+.tc b { color: var(--fg); font-weight: 600; }
+.spacer { flex: 1; }
+.loop { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.segs { display: flex; height: 30px; border-radius: 6px; overflow: hidden; gap: 2px; }
+.seg { position: relative; background: var(--panel-2); border: 0; border-radius: 0; padding: 0 6px; font-size: 11.5px; color: var(--muted); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: left; min-width: 0; }
+.seg .fill { position: absolute; inset: 0 auto 0 0; background: rgba(255, 210, 31, .18); width: 0; pointer-events: none; }
+.seg span { position: relative; }
+.seg.on { color: var(--fg); }
+.seg.on .fill { background: rgba(255, 210, 31, .3); }
+#scrub { width: 100%; accent-color: var(--sticker); }
+
+/* ---------- Notes ---------- */
+.notes { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.notes .head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.notes .num { font-family: var(--font-mono); font-size: 12px; color: var(--ink); background: var(--sticker); border-radius: 4px; padding: 1px 6px; font-weight: 600; }
+.notes h2 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+.notes .range { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+.notes dl { margin: 0; display: grid; gap: 12px; }
+.notes dt { font-size: 11.5px; letter-spacing: .06em; color: var(--muted); margin-bottom: 2px; }
+.notes dd { margin: 0; font-size: 14px; }
+.notes dd.cap { font-size: 16px; font-weight: 600; }
+.notes code { font-family: var(--font-mono); font-size: 12px; color: #e8d9a0; overflow-wrap: anywhere; }
+
+/* ---------- Flow table ---------- */
+section h3 { font-size: 13px; letter-spacing: .08em; color: var(--muted); font-weight: 600; margin: 0 0 12px; }
+.flow { display: grid; gap: 10px; }
+.ch { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+@media (max-width: 640px) { .ch { grid-template-columns: minmax(0, 1fr); } }
+.ch.on { border-color: var(--sticker); }
+.ch .left { display: grid; gap: 4px; align-content: start; }
+.ch .left .t { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ch .left .k { font-weight: 700; font-size: 15px; }
+.ch .left .m { font-size: 13px; color: var(--sticker); }
+.ch .shots { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.ch .shots button { flex: 0 0 auto; width: 168px; padding: 0; background: none; border: 1px solid transparent; border-radius: 6px; overflow: hidden; text-align: left; display: grid; }
+.ch .shots button.on { border-color: var(--sticker); }
+.ch .shots .im { aspect-ratio: 16/9; background: center / cover no-repeat #000; }
+.ch .shots .c { font-size: 11.5px; color: #d9cfc6; padding: 5px 6px 6px; line-height: 1.35; white-space: normal; }
+
+.callout { border: 1px dashed var(--line); border-radius: 10px; padding: 14px 16px; color: var(--muted); font-size: 13.5px; display: grid; gap: 6px; }
+.callout b { color: var(--fg); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">쇼케이스 영상 · 시연형 초안</div>
+    <h1><b>BPA360</b> 쇼케이스 시연 영상</h1>
+    <div class="meta">
+      <span>16:9 · 무음 · 반복 재생</span>
+      <span id="metaDur">6개 챕터</span>
+      <span>배경: 가라오케 사건 튜토리얼</span>
+    </div>
+  </header>
+
+  <div class="player-row">
+    <div class="player">
+      <div class="stage" id="stage" aria-label="시연 영상">
+        <div class="scrim" id="scrim"></div>
+        <div class="chip" id="chip"><span class="n" id="chipN">01</span><span id="chipT"></span></div>
+        <div class="dots" id="dots"></div>
+        <div class="step" id="step"></div>
+        <div class="hook" id="hook">혈흔은 어떤 이야기를 남길까요?</div>
+        <div class="chapter-card" id="card">
+          <div class="no" id="cardNo">CHAPTER 01</div>
+          <div class="msg" id="cardMsg"></div>
+          <div class="name" id="cardName"></div>
+        </div>
+        <div class="endcard" id="endcard">
+          <div class="mark">BPA<i>360</i></div>
+          <div class="line">공간에서 배우는 혈흔형태분석</div>
+          <div class="cta">지금 부스에서 직접 체험해 보세요</div>
+        </div>
+        <div class="tc-overlay" id="tcOverlay">00:00</div>
+      </div>
+
+      <div class="controls">
+        <div class="ctrl-top">
+          <button id="play" type="button">일시정지</button>
+          <div class="tc"><b id="tcNow">00:00</b> / <span id="tcDur">01:11</span></div>
+          <div class="spacer"></div>
+          <label class="loop" for="loop"><input type="checkbox" id="loop" checked> 반복 재생</label>
+          <button id="fs" type="button">전체 화면</button>
+        </div>
+        <div class="segs" id="segs"></div>
+        <input type="range" id="scrub" min="0" max="71" step="0.05" value="0" aria-label="재생 위치">
+      </div>
+    </div>
+    <aside class="notes" id="notes" aria-live="polite"></aside>
+  </div>
+
+  <section>
+    <h3>챕터 흐름 · 장면을 누르면 그 위치로 이동해요</h3>
+    <div class="flow" id="flow"></div>
+  </section>
+
+  <div class="callout">
+    <div><b>구성 방식</b> 레퍼런스 영상처럼 1인칭 시야에서 손 조작과 단계 자막으로 앱 흐름을 보여주고, 챕터가 바뀔 때마다 기획안의 핵심 메시지를 큰 글씨로 넣었어요. 부스 앞을 지나가는 사람은 큰 메시지로 앱을 이해하고, 멈춰 선 사람은 단계 자막으로 사용 방법을 볼 수 있어요.</div>
+    <div><b>실제 영상으로 만들 때</b> 각 장면은 Figma 튜토리얼 정지 화면이에요. 앱 녹화본이나 손 동작 애니메이션으로 바꾸고, 챕터 타이틀·단계 자막의 위치와 길이는 그대로 참고하면 돼요.</div>
+    <div><b>부스 TV에서 틀 때</b> 전체 화면 버튼(또는 F 키)을 누르면 화면만 크게 보여요.</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const IMG = n => `img/${n}.jpg`;
+  const CARD = 2.0; // 챕터 타이틀이 떠 있는 시간
+
+  // 챕터와 장면. 자막은 레퍼런스처럼 "지금 하는 동작"을 한 줄로.
+  const chapters = [
+    { key: '도입', hook: true, shots: [
+      { img: 's1_free', d: 5.0, cap: '', frame: '공간 진입 후 10초 자유관찰', move: [1.0, 1.12, 4, 1] } ] },
+    { key: '사건 브리핑', msg: '이제, 공간에서 직접 분석해 보세요', shots: [
+      { img: 's2_brief', d: 3.6, cap: '현장에 먼저 도착한 경찰에게 사건 이야기를 들어요', frame: '사건 브리핑 (1/5)' },
+      { img: 'a2_brief', d: 3.4, cap: '사건 정보를 확인하고 분석을 시작해요', frame: '사건 브리핑 (3/5)' } ] },
+    { key: '구역 지정', msg: '실제 크기로 관찰하고', shots: [
+      { img: 'b2_tool', d: 3.4, cap: '작업 패널에서 구역 스티커를 골라요', frame: '구역 스티커 도구 선택' },
+      { img: 's3_done', d: 3.6, cap: '혈흔이 모인 벽에 A구역 스티커를 붙여요', frame: '구역 스티커 _ 구역 배치 완료 / 다음 단계로' } ] },
+    { key: '혈흔 분류', msg: '다양한 도구로 분석하며', shots: [
+      { img: 'c2_point', d: 2.8, cap: '분석할 혈흔을 집어 시작점을 정해요', frame: '혈흔유형화_시작점 선택' },
+      { img: 'c3_drag', d: 2.8, cap: '끌어서 사각형으로 혈흔을 묶어요', frame: '혈흔유형화_ 영역선택중' },
+      { img: 'c4_area', d: 2.6, cap: '묶은 혈흔을 A구역에 지정해요', frame: '혈흔유형화_구역 지정' },
+      { img: 'c6_done', d: 2.6, cap: 'A-1 그룹이 만들어졌어요', frame: '혈흔유형화_유형화 완료' },
+      { img: 's4_group', d: 3.4, cap: '질문에 답하며 혈흔 유형을 분류해요', frame: '혈흔유형화_혈흔 그룹 유형화' } ] },
+    { key: '방향 분석', msg: '혈흔이 날아간 방향을 읽고', shots: [
+      { img: 'd2_select', d: 3.0, cap: '혈흔의 진행 방향을 표시해요', frame: '대표혈흔선정_개별 혈흔 선택' },
+      { img: 'd3_sticker', d: 2.8, cap: '방향 펜으로 대표 혈흔을 골라요', frame: '대표혈흔선정_스티커 부착 (펜 선택)' },
+      { img: 'd5_sticker', d: 3.0, cap: '혈흔 꼬리 방향으로 스티커를 붙여요', frame: '대표혈흔선정_스티커 부착' } ] },
+    { key: '발혈 위치', msg: '피가 튄 지점을 찾아', shots: [
+      { img: 'e1_string', d: 2.8, cap: '혈흔에서 줄을 당겨 연결해요', frame: '방향성 (스트리닝) flow_줄 연결법 (안내)' },
+      { img: 'e3_string', d: 2.8, cap: '방향을 따라 줄을 길게 늘여요', frame: '방향성 (스트리닝) flow_줄 연결법 (당기기)' },
+      { img: 'e4_string', d: 2.8, cap: '줄이 한 점에서 만났어요', frame: '방향성 (스트리닝) flow_줄 연결법 (수렴)' },
+      { img: 's5_origin', d: 3.2, cap: '줄이 모인 곳이 피가 튄 위치예요', frame: '방향성 (스트리닝) flow_공간발혈부위', pulse: true, move: [1.0, 1.12, 0, -5] } ] },
+    { key: '현장 재구성', msg: '사건의 상황을 추론합니다', shots: [
+      { img: 'f2_pose', d: 3.4, cap: '분석 결과로 피해자의 자세를 골라요', frame: '현장 재구성 _ 피해자 자세 선택' },
+      { img: 's6_statement', d: 3.4, cap: '친구의 진술이 사실인지 판단해요', frame: '현장 재구성 _ 친구 진술 진위판단' },
+      { img: 's6_final', d: 4.6, cap: '분석의 과정이 하나의 보고서로 정리돼요', frame: '보고서 (최종)', move: [1.0, 1.22, 0, 2] } ] },
+    { key: '마무리', outro: true, shots: [ { img: null, d: 5.6, cap: '', frame: '로고 미정 · 텍스트로 임시 표시' } ] },
+  ];
+
+  // 타임라인 계산
+  let t0 = 0;
+  const shots = [];
+  chapters.forEach((ch, ci) => {
+    ch.start = t0;
+    const hasCard = !!ch.msg;
+    ch.shots.forEach((s, si) => {
+      const d = s.d + (hasCard && si === 0 ? CARD : 0);
+      Object.assign(s, { ci, si, start: t0, end: t0 + d, chapter: ch });
+      shots.push(s);
+      t0 += d;
+    });
+    ch.end = t0;
+  });
+  const DUR = t0;
+
+  const $ = id => document.getElementById(id);
+  const stage = $('stage');
+  const scrim = $('scrim');
+  const XF = 0.45; // 장면 사이 크로스페이드
+
+  shots.forEach(s => {
+    if (!s.img) return;
+    const el = document.createElement('div');
+    el.className = 'shot';
+    el.style.backgroundImage = `url(${IMG(s.img)})`;
+    if (s.pulse) {
+      const p = document.createElement('div');
+      p.style.cssText = 'position:absolute;left:49.4%;top:58.9%;width:7cqw;height:7cqw;margin:-3.5cqw 0 0 -3.5cqw;border-radius:50%;border:.35cqw solid var(--blood);opacity:0';
+      el.appendChild(p);
+      s.pulseEl = p;
+    }
+    stage.insertBefore(el, scrim);
+    s.el = el;
+  });
+
+  const clamp = (v, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
+  const ease = x => 0.5 - 0.5 * Math.cos(Math.PI * clamp(x));
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const fade = (t, a, b, fi, fo) => (t < a || t > b) ? 0 : Math.min(clamp((t - a) / fi), clamp((b - t) / fo));
+  const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+  $('tcDur').textContent = fmt(DUR);
+  $('metaDur').textContent = `6개 챕터 · ${Math.round(DUR)}초`;
+  $('scrub').max = DUR;
+
+  const isFirst = s => s.si === 0;
+  const isLast = s => s.si === s.chapter.shots.length - 1;
+
+  let lastStepText = null, current = null;
+  function render(t) {
+    shots.forEach((s, i) => {
+      if (!s.el) return;
+      // 앞 장면과 겹쳐 크로스페이드: 각 장면은 다음 장면 시작 후 XF초까지 남아 있음
+      const a = s.start, b = s.end + (i < shots.length - 1 && shots[i + 1].img ? XF : 0);
+      const fi = (i === 0) ? 1.2 : (isFirst(s) && s.chapter.msg ? 0.5 : XF);
+      const fo = (shots[i + 1] && !shots[i + 1].img) ? 0.8 : 0.01;
+      const o = fade(t, a, b, fi, fo);
+      s.el.style.opacity = o;
+      if (o <= 0) return;
+      const m = s.move || [1.0, 1.045, 0, 0];
+      const k = ease((t - s.start) / (s.end - s.start));
+      s.el.style.transform = `translate(${lerp(0, m[2], k)}%, ${lerp(0, m[3], k)}%) scale(${lerp(m[0], m[1], k)})`;
+      if (s.pulseEl) {
+        const pa = s.start + 0.4, pb = s.end;
+        if (t >= pa && t <= pb) {
+          const cyc = ((t - pa) % 1.4) / 1.4;
+          s.pulseEl.style.opacity = (1 - cyc) * fade(t, pa, pb, 0.3, 0.3);
+          s.pulseEl.style.transform = `scale(${0.5 + cyc * 1.6})`;
+        } else s.pulseEl.style.opacity = 0;
+      }
+    });
+
+    const cur = shots.find(s => t >= s.start && t < s.end) || shots[shots.length - 1];
+    const ch = cur.chapter;
+
+    // 챕터 타이틀 카드
+    const cardOn = ch.msg ? fade(t, ch.start, ch.start + CARD, 0.35, 0.45) : 0;
+    scrim.style.opacity = cardOn;
+    $('card').style.opacity = cardOn;
+    if (ch.msg && cardOn > 0) {
+      const n = chapters.filter(c => c.msg).indexOf(ch) + 1;
+      $('cardNo').textContent = 'CHAPTER ' + String(n).padStart(2, '0');
+      $('cardMsg').textContent = ch.msg;
+      $('cardName').textContent = ch.key;
+    }
+
+    // 챕터 칩 + 진행 점
+    const chipOn = ch.msg ? fade(t, ch.start + CARD - 0.2, ch.end, 0.4, 0.3) : 0;
+    $('chip').style.opacity = chipOn;
+    $('dots').style.opacity = chipOn * 0.95;
+    if (ch.msg) {
+      const n = chapters.filter(c => c.msg).indexOf(ch) + 1;
+      $('chipN').textContent = String(n).padStart(2, '0');
+      $('chipT').textContent = ch.key;
+      const dots = $('dots');
+      if (dots.dataset.ch !== String(cur.ci)) {
+        dots.dataset.ch = cur.ci;
+        dots.innerHTML = ch.shots.map(() => '<i></i>').join('');
+      }
+      [...dots.children].forEach((d, i) => { d.className = i < cur.si ? 'done' : i === cur.si ? 'on' : ''; });
+    }
+
+    // 단계 자막
+    const stepEl = $('step');
+    if (cur.cap) {
+      const capStart = isFirst(cur) && ch.msg ? cur.start + CARD : cur.start;
+      if (lastStepText !== cur.cap) { stepEl.textContent = cur.cap; lastStepText = cur.cap; }
+      stepEl.style.opacity = fade(t, capStart + 0.15, cur.end, 0.3, 0.2);
+    } else stepEl.style.opacity = 0;
+
+    $('hook').style.opacity = ch.hook ? fade(t, 0.8, ch.end, 0.6, 0.5) : 0;
+    $('endcard').style.opacity = ch.outro ? fade(t, ch.start, DUR, 0.9, 1.1) : 0;
+
+    $('tcNow').textContent = fmt(t);
+    $('tcOverlay').textContent = fmt(t);
+    $('scrub').value = t;
+    segEls.forEach((el, i) => {
+      const c = chapters[i];
+      el.querySelector('.fill').style.width = (clamp((t - c.start) / (c.end - c.start)) * 100) + '%';
+      el.classList.toggle('on', c === ch);
+    });
+    if (cur !== current) { current = cur; showNotes(cur); }
+  }
+
+  // 챕터 타임라인
+  const segEls = chapters.map(c => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'seg';
+    b.style.flex = String(c.end - c.start);
+    b.innerHTML = `<div class="fill"></div><span>${c.key}</span>`;
+    b.title = `${fmt(c.start)}–${fmt(c.end)} ${c.key}`;
+    b.addEventListener('click', () => seek(c.start + 0.01));
+    $('segs').appendChild(b);
+    return b;
+  });
+
+  // 흐름표
+  const shotBtns = [];
+  const chEls = chapters.map(c => {
+    const row = document.createElement('div');
+    row.className = 'ch';
+    const items = c.shots.map(s => {
+      const im = s.img ? `<div class="im" style="background-image:url(${IMG(s.img)})"></div>` : `<div class="im" style="display:grid;place-content:center;font-weight:800">BPA<span style="color:var(--sticker)">360</span></div>`;
+      return `<button type="button" data-t="${s.start}">${im}<div class="c">${s.cap || (c.hook ? '“혈흔은 어떤 이야기를 남길까요?”' : '로고 · “지금 부스에서 직접 체험해 보세요”')}</div></button>`;
+    }).join('');
+    row.innerHTML = `<div class="left"><span class="t">${fmt(c.start)}–${fmt(c.end)}</span><span class="k">${c.key}</span>${c.msg ? `<span class="m">“${c.msg}”</span>` : ''}</div><div class="shots">${items}</div>`;
+    row.querySelectorAll('button').forEach((b, i) => {
+      b.addEventListener('click', () => { seek(parseFloat(b.dataset.t) + (i === 0 && c.msg ? CARD + 0.1 : 0.05)); stage.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+      shotBtns.push({ b, s: c.shots[i] });
+    });
+    $('flow').appendChild(row);
+    return row;
+  });
+
+  function showNotes(s) {
+    const c = s.chapter;
+    const n = chapters.filter(x => x.msg).indexOf(c) + 1;
+    $('notes').innerHTML = `
+      <div class="head">${n ? `<span class="num">${String(n).padStart(2, '0')}</span>` : ''}<h2>${c.key}</h2><span class="range">${fmt(s.start)}–${fmt(s.end)}</span></div>
+      <dl>
+        ${c.msg ? `<div><dt>챕터 메시지 (큰 글씨)</dt><dd class="cap">“${c.msg}”</dd></div>` : ''}
+        ${s.cap ? `<div><dt>단계 자막</dt><dd>${s.cap}</dd></div>` : ''}
+        ${c.hook ? `<div><dt>도입 문구</dt><dd class="cap">“혈흔은 어떤 이야기를 남길까요?”</dd></div>` : ''}
+        ${c.outro ? `<div><dt>마무리</dt><dd>BPA360 로고 · 공간에서 배우는 혈흔형태분석 · 체험 유도 문구 후 검은 화면으로 사라지고 처음으로 이어져요.</dd></div>` : ''}
+        <div><dt>Figma 프레임 (쇼케이스 튜토리얼)</dt><dd><code>${s.frame}</code></dd></div>
+        <div><dt>장면 ${s.si + 1} / ${c.shots.length}</dt><dd>${(s.end - s.start).toFixed(1)}초</dd></div>
+      </dl>`;
+    chEls.forEach((el, i) => el.classList.toggle('on', chapters[i] === c));
+    shotBtns.forEach(({ b, s: x }) => b.classList.toggle('on', x === s));
+  }
+
+  // 재생
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let t = reduce ? 3 : 0, playing = !reduce, last = null;
+  const playBtn = $('play');
+  const syncBtn = () => { playBtn.textContent = playing ? '일시정지' : '재생'; };
+  function seek(v) { t = clamp(v, 0, DUR); render(t); }
+  playBtn.addEventListener('click', () => { playing = !playing; last = null; syncBtn(); });
+  $('scrub').addEventListener('input', e => seek(parseFloat(e.target.value)));
+  const goFull = () => { (stage.requestFullscreen ? stage.requestFullscreen() : Promise.reject()).catch(() => {}); };
+  $('fs').addEventListener('click', goFull);
+  document.addEventListener('keydown', e => {
+    if (/INPUT/.test(document.activeElement.tagName)) return;
+    if (e.code === 'Space') { e.preventDefault(); playBtn.click(); }
+    if (e.key === 'f' || e.key === 'F') goFull();
+  });
+  function tick(now) {
+    if (playing) {
+      if (last != null) {
+        t += (now - last) / 1000;
+        if (t >= DUR) {
+          if ($('loop').checked) t -= DUR; else { t = DUR; playing = false; syncBtn(); }
+        }
+      }
+      last = now;
+      render(t);
+    } else last = null;
+    requestAnimationFrame(tick);
+  }
+  syncBtn();
+  render(t);
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
